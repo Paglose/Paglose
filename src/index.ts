@@ -1,35 +1,38 @@
 import * as discord from "discord.js";
 import * as fs from "fs";
 import * as child_process from "child_process";
-type middleware = (eventdata:eventData,obj:discordObj)=>void;
-type messageHandler = (message:string,eventdata:eventData,messageobj:discord.Message)=>void;
-type discordObj = discord.Base;
-type eventHandler = (eventdata:eventData, obj:discordObj)=>void;
-interface pagloseModule{
-    middleware?:middleware,
-    onmessage?:messageHandler,
-    onevent?:eventHandler
+
+type Middleware = (eventData:EventData,obj:DiscordObj)=>void;
+type MessageHandler = (message:string,eventdata:EventData,messageObj:discord.Message)=>void;
+type DiscordObj = discord.Base;
+type EventHandler = (eventdata:EventData, obj:DiscordObj)=>void;
+interface PagloseModule{
+    middleware?:Middleware,
+    onMessage?:MessageHandler,
+    onEvent?:EventHandler
 };
-interface configFile{
+interface ConfigFile{
     version:string,
     install?:string,
     init?:string,
-    module:string | pagloseModule
+    module:string | PagloseModule
     requires?:{},
     location?:string
 };
-interface eventData{
+interface EventData{
     message?:string,
     name:string,
     [key:string]:unknown
 };
-let dir =  fs.opendirSync(__dirname);
-let configFiles:{[key:string]: configFile} = {};
-let folderCount = 0;
 
-let registeredMiddleware:middleware[] = [];
-let registeredMessageHandlers:messageHandler[] = [];
-let registeredEventHandlers:eventHandler[] = [];
+let dir =  fs.opendirSync(__dirname);
+let configFiles:{[key:string]: ConfigFile} = {};
+
+let registeredMiddleware:Middleware[] = [];
+let registeredMessageHandlers:MessageHandler[] = [];
+let registeredEventHandlers:EventHandler[] = [];
+
+let folderCount = 0;
 for(let ent = dir.readSync();ent != null; dir.readSync()){
     if(!ent.isDirectory()){
 	continue;
@@ -48,12 +51,13 @@ for(let ent = dir.readSync();ent != null; dir.readSync()){
 let interval = setInterval(()=>{
     let tempCounter = 0;
     for(let i in configFiles) tempCounter-=-1;
-    if(tempCounter == folderCount)
+    if(tempCounter == folderCount){
 	clearInterval(interval);
 	startInstall();
 	startInit();
 	mapModules();
 	initHandlers();
+    }
 },50);
 /**
  * runs all the install scripts for the modules
@@ -94,11 +98,11 @@ function initHandlers(){
 		if(module.middleware){
 		    registeredMiddleware.push(module.middleware);
 		}
-		if(module.onmessage){
-		    registeredMessageHandlers.push(module.onmessage);
+		if(module.onMessage){
+		    registeredMessageHandlers.push(module.onMessage);
 		}
-		if(module.onevent){
-		    registeredEventHandlers.push(module.onevent);
+		if(module.onEvent){
+		    registeredEventHandlers.push(module.onEvent);
 		}
 	    }
 	}
@@ -118,7 +122,7 @@ function initHandlers(){
     client.login(process.env.PAGLOSE_DISCORD_TOKEN);
 }
 function handleMessage(message:discord.Message):void{
-    let data:eventData = {
+    let data:EventData = {
 	message:message.content,
 	name:"message"
     };
@@ -129,8 +133,8 @@ function handleMessage(message:discord.Message):void{
 	handler(data.message,data, message);
     }
 }
-function handleEvent(name:string,obj:discordObj):void{
-    let data:eventData = {
+function handleEvent(name:string,obj:DiscordObj):void{
+    let data:EventData = {
 	name:name
     }
     for(let middleware of registeredMiddleware){
