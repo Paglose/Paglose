@@ -1,12 +1,6 @@
 import * as discord from "discord.js";
 import * as fs from "fs";
 import * as child_process from "child_process";
-let dir =  fs.opendirSync(__dirname);
-interface eventData{
-    message?:string,
-    name:string,
-    [key:string]:unknown
-};
 type middleware = (eventdata:eventData,obj:discordObj)=>void;
 type messageHandler = (message:string,eventdata:eventData,messageobj:discord.Message)=>void;
 type discordObj = discord.Base;
@@ -24,6 +18,12 @@ interface configFile{
     requires?:{},
     location?:string
 };
+interface eventData{
+    message?:string,
+    name:string,
+    [key:string]:unknown
+};
+let dir =  fs.opendirSync(__dirname);
 let configFiles:{[key:string]: configFile} = {};
 let folderCount = 0;
 
