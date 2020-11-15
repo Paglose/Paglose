@@ -14,3 +14,5 @@ every child folder is a separate git submodule to try and maximize modularity, e
     }
 }
 the main file will use these module.json files to initialize the modules
+## compiling
+use the tsc command to compile into js files then move whatever modules you want into the out directory and move the out directory wherever you want to run the bot from
